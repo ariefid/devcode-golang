@@ -1,0 +1,53 @@
+version: "3.8"
+
+services:
+    ariefid-apps-echo:
+        restart: unless-stopped
+        tty: true
+        ports:
+            - $ECHO_EXPOSE_PORT:$ECHO_DOCKER_PORT
+        env_file: ./.env
+        environment:
+            MYSQL_HOST: $MYSQL_HOST
+            MYSQL_PORT: $MYSQL_PORT
+            MYSQL_USER: $MYSQL_USER
+            MYSQL_PASSWORD: $MYSQL_PASSWORD
+            MYSQL_DBNAME: $MYSQL_DBNAME
+            ECHO_DOCKER_PORT: $ECHO_DOCKER_PORT
+            ECHO_EXPOSE_PORT: $ECHO_EXPOSE_PORT
+            ECHO_BUILD_OUTPUT: $ECHO_BUILD_OUTPUT
+            SERVICE_NAME: ariefid-apps-echo
+            SERVICE_TAGS: ariefid,golang,apps
+        networks:
+            - ariefid-network
+        build:
+            context: .
+            dockerfile: ./deploy/apps/echo/Dockerfile
+        depends_on:
+            - ariefid-db-mysql
+
+    ariefid-db-mysql:
+        image: mysql:8.0.31
+        restart: unless-stopped
+        tty: true
+        ports:
+            - $MYSQL_PORT:$MYSQL_PORT
+        env_file: ./.env
+        environment:
+            MYSQL_DATABASE: $MYSQL_DBNAME
+            MYSQL_ROOT_PASSWORD: $MYSQL_ROOT_PASSWORD
+            MYSQL_TCP_PORT: $MYSQL_PORT
+            SERVICE_NAME: ariefid-db-mysql
+            SERVICE_TAGS: ariefid,mysql,database
+        volumes:
+            - ariefid-volume-mysql:/var/lib/mysql/
+        networks:
+            - ariefid-network
+
+networks:
+    ariefid-network:
+        driver: bridge
+
+volumes:
+    ariefid-volume-mysql:
+        driver: local
